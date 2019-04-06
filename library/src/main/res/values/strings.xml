@@ -1,5 +1,4 @@
 <resources>
     <string name="app_name">FileChooser4WebView</string>
-    <string name="permission_camera">摄像头</string>
-    <string name="permission_storage">存储</string>
+    <string name="permission_denied">请启用读取存储的权限</string>
 </resources>

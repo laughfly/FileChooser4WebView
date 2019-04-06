@@ -5,7 +5,9 @@ import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.RequiresApi;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
@@ -15,7 +17,9 @@ import java.lang.ref.WeakReference;
 /**
  * Created by cwy on 2018/3/27.
  */
-public class FileChooserChromeClient extends WebChromeClient implements IChromeClient{
+public class FileChooserChromeClient extends WebChromeClient {
+
+    private static String TAG = "FileChooserChromeClient";
 
     private ValueCallback<Uri> mUploadMessage;
     private ValueCallback<Uri[]> mUploadCallbackAboveL;
@@ -28,23 +32,26 @@ public class FileChooserChromeClient extends WebChromeClient implements IChromeC
         mContextRef = new WeakReference<>(view.getContext());
     }
 
-    public void openFileChooser(ValueCallback<Uri> uploadMsg, String acceptType) {
-        openFileChooser(uploadMsg, acceptType, "");
-    }
-
     public void openFileChooser(ValueCallback<Uri> uploadMsg) {
         openFileChooser(uploadMsg, "", "");
     }
 
-    public void openFileChooser(ValueCallback<Uri> uploadMsg, String acceptType, String capture) {
-        mUploadMessage = uploadMsg;
-        startDelegateActivity();
+    public void openFileChooser(ValueCallback<Uri> uploadMsg, String acceptType) {
+        openFileChooser(uploadMsg, acceptType, "");
     }
 
+    public void openFileChooser(ValueCallback<Uri> uploadFile, String acceptType, String capture) {
+        mUploadMessage = uploadFile;
+        String[] acceptTypes = Utility.parseAcceptTypes(new String[]{acceptType});
+        startDelegateActivity(acceptTypes);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback,
                                      FileChooserParams fileChooserParams) {
         mUploadCallbackAboveL = filePathCallback;
-        startDelegateActivity();
+        String[] acceptTypes = Utility.parseAcceptTypes(fileChooserParams != null ? fileChooserParams.getAcceptTypes() : null);
+        startDelegateActivity(acceptTypes);
         return true;
     }
 
@@ -52,11 +59,12 @@ public class FileChooserChromeClient extends WebChromeClient implements IChromeC
         return mContextRef != null ? mContextRef.get() : null;
     }
 
-    private void startDelegateActivity() {
+    private void startDelegateActivity(String[] mimeTypes) {
         Context context = getContext();
         if (context != null) {
             initLifecycle();
             Intent intent = new Intent(context, FileChooserDelegateActivity.class);
+            intent.putExtra("mimeTypes", mimeTypes);
             context.startActivity(intent);
         }
     }
@@ -106,8 +114,7 @@ public class FileChooserChromeClient extends WebChromeClient implements IChromeC
         }
     }
 
-    @Override
-    public void handleResult(int resultCode, Uri result) {
+    void handleResult(int resultCode, Uri result) {
         if (Activity.RESULT_CANCELED == resultCode) {
             if (mUploadMessage != null) {
                 mUploadMessage.onReceiveValue(null);
@@ -127,8 +134,7 @@ public class FileChooserChromeClient extends WebChromeClient implements IChromeC
         mUploadCallbackAboveL = null;
     }
 
-    @Override
-    public void handleFinish() {
+    void handleFinish() {
         if (mUploadMessage != null) {
             mUploadMessage.onReceiveValue(null);
         }

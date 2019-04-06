@@ -18,6 +18,7 @@ public class MainActivity extends Activity {
         setContentView(R.layout.main_activity);
         mWebView = findViewById(R.id.webview);
         mWebView.getSettings().setJavaScriptEnabled(true);
+        mWebView.getSettings().setAllowFileAccess(true);
         mWebView.setWebChromeClient(new FileChooserChromeClient());
         mWebView.setWebViewClient(new WebViewClient());
         mWebView.loadUrl("file:///android_asset/test.html");

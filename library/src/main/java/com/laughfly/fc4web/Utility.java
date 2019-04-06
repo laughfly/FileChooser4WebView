@@ -3,6 +3,7 @@ package com.laughfly.fc4web;
 import android.annotation.SuppressLint;
 import android.content.ContentUris;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
@@ -10,12 +11,42 @@ import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 
+import java.util.LinkedList;
+import java.util.List;
 
+/**
+ * Created by caowy on 2018/6/19.
+ */
 
-public class ContentUtil {
+class Utility {
+
+    static String[] parseAcceptTypes(String[] acceptTypes) {
+        List<String> acceptList = new LinkedList<>();
+        int N = acceptTypes != null ? acceptTypes.length : 0;
+        for (int i = 0; i < N; i++) {
+            String acceptType = acceptTypes[i];
+            if (acceptType != null) {
+                String[] split = acceptType.trim().split(",");
+                for (String m : split) {
+                    if (m.length() > 0) {
+                        acceptList.add(m);
+                    }
+                }
+            }
+        }
+        return acceptList.toArray(new String[acceptList.size()]);
+    }
+
+    static Intent createIntent(String[] mimeTypes) {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("*/*");
+        intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
+        return Intent.createChooser(intent, "Choose File");
+    }
 
     @SuppressLint("NewApi")
-    public static final String getPath(final Context context, final Uri uri) {
+    static String getPath(final Context context, final Uri uri) {
+        if(uri == null) return null;
 
         final boolean isKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
 
@@ -38,7 +69,7 @@ public class ContentUtil {
 
                 final String id = DocumentsContract.getDocumentId(uri);
                 final Uri contentUri = ContentUris.withAppendedId(
-                        Uri.parse("content://downloads/public_downloads"), Long.valueOf(id));
+                    Uri.parse("content://downloads/public_downloads"), Long.valueOf(id));
 
                 return getDataColumn(context, contentUri, null, null);
             }
@@ -91,13 +122,13 @@ public class ContentUtil {
      * @param selectionArgs (Optional) Selection arguments used in the query.
      * @return The value of the _data column, which is typically a file path.
      */
-    public static final String getDataColumn(Context context, Uri uri, String selection, String[] selectionArgs) {
+    static String getDataColumn(Context context, Uri uri, String selection, String[] selectionArgs) {
 
         Cursor cursor = null;
 
         try {
             cursor = context.getContentResolver().query(uri, new String[]{MediaStore.Images.Media.DATA}
-                    , selection, selectionArgs, null);
+                , selection, selectionArgs, null);
             if (cursor != null && cursor.moveToFirst()) {
                 final int index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
                 return cursor.getString(index);

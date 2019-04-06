@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">FileChooser4WebView</string>
+    <string name="permission_denied">Please enable the permission of READ STORAGE</string>
+</resources>
